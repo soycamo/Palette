@@ -29,24 +29,32 @@ private
 			# Then a 10 byte code of the following (RGB only):
 			#	0000 rrrr gggg bbbb 0000
 			@colors = []
-			num = (@f.read(4)).unpack('xxxC')[0]
-			@f.seek(num * 10 + 8); pos = @f.pos
-			if ( pos < File.size(@f)) && named 
-				@f.seek 4
-				@f.seek(num * 10 + 8)
-				num.times do
-					@colors << @f.read(10).unpack('xxH2xxH2H2').to_s
-					len = (@f.read(4)).unpack('xxxU')[0]
-					@colors << @f.read(len*2).unpack('xa' * len).to_s.rstrip
+			version = (@f.read(2)).unpack('c*').to_s
+			num = (@f.read(2)).unpack('H*')[0].hex
+			case version
+				when "01"
+				@f.seek(num * 10 + 8); pos = @f.pos
+				if ( pos < File.size(@f)) && named 
+					@f.seek 4
+					@f.seek(num * 10 + 8)
+					num.times do
+						@colors << @f.read(10).unpack('xxH2xxH2H2').to_s
+						len = (@f.read(4)).unpack('xxxU')[0]
+						@colors << @f.read(len*2).unpack('xa' * len).to_s.rstrip
+					end
+					@colors = Hash[*@colors.flatten]
+				else
+					@f.seek 4
+					num.times do 
+						@colors << @f.read(10).unpack('xxH2xxH2H2').to_s
+					end	
 				end
-				@colors = Hash[*@colors.flatten]
+				@f.rewind
+			when "02"
+				p "version 3"
 			else
-				@f.seek 4
-				num.times do 
-					@colors << @f.read(10).unpack('xxH2xxH2H2').to_s
-				end	
+				p "unknown version"
 			end
-			@f.rewind
 			return @colors
 		end
 
@@ -69,7 +77,7 @@ private
 end
 
 if !ARGV[0].nil? && File.file?(ARGV[0])
-	aco = Palette::Aco.new(ARGV[0]).named_colors
+	aco = Palette::Aco.new(ARGV[0]).colors
 	p aco
 	p aco.length
 else
