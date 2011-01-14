@@ -1,0 +1,8 @@
+Palette.rb
+Written by Cameron Adamez, soycow.org
+
+Reads .aco files and returns you an array of RGB colors,
+or a hash of named RGB colors if they exist.
+
+Usage:
+Palette::Aco.new(filename.aco).colors
